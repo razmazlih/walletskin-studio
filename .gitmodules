@@ -1,0 +1,3 @@
+[submodule "upstream/AirCard"]
+	path = upstream/AirCard
+	url = https://github.com/Mak5er/AirCard.git

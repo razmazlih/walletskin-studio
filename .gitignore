@@ -1,0 +1,11 @@
+build/
+dist/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+Recovery/
+*.log
