@@ -23,6 +23,7 @@ done
 lipo -create build/device_helper_arm64 build/device_helper_x86_64 -output "$APP/Contents/Resources/bin/device_helper"
 lipo -create build/airtraffic_host_arm64 build/airtraffic_host_x86_64 -output "$APP/Contents/Resources/bin/airtraffic_host"
 lipo -create build/WalletSkinStudio_arm64 build/WalletSkinStudio_x86_64 -output "$APP/Contents/MacOS/WalletSkinStudio"
+cp -R Resources/StarterDesigns "$APP/Contents/Resources/StarterDesigns"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp scripts/validate_stage.py "$APP/Contents/Resources/validate_stage.py"
 cp Resources/aircard_artwork.py "$APP/Contents/Resources/aircard_artwork.py"
@@ -38,8 +39,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleName</key><string>WalletSkin Studio</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.3.1</string>
-<key>CFBundleVersion</key><string>8</string>
+<key>CFBundleShortVersionString</key><string>0.3.2</string>
+<key>CFBundleVersion</key><string>9</string>
 <key>CFBundleDevelopmentRegion</key><string>he</string>
 <key>CFBundleLocalizations</key><array><string>he</string><string>en</string></array>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
@@ -61,6 +62,21 @@ if [ "${SKIP_DMG:-0}" != 1 ]; then
  codesign --verify --strict "$STAGING/WalletSkin Studio.app"
  ln -s /Applications "$STAGING/Applications"
  cp README.md "$STAGING/README-he.md"
+ mkdir -p "$STAGING/Resources"
+ cp -R Resources/StarterDesigns "$STAGING/Resources/StarterDesigns"
+ cat > "$STAGING/START-HERE.txt" <<'GUIDE'
+WalletSkin Studio — התחלה מהירה
+
+1. גררו את WalletSkin Studio אל Applications.
+2. פתחו את האפליקציה מתוך Applications.
+3. אם תופיע הכנה חד-פעמית, השתמשו בכפתור התקנת רכיב Apple.
+4. עקבו אחרי שלבים 1–4 בראש האפליקציה.
+
+מדריך מלא בעברית עם תמונות:
+https://github.com/razmazlih/walletskin-studio#readme
+
+החלה על iPhone היא ניסיונית: סיכון לנתוני Books, ללא שחזור מאומת לתמונת המקור.
+GUIDE
  cp -R docs "$STAGING/docs"
  hdiutil create -volname 'WalletSkin Studio' -srcfolder "$STAGING" -ov -format UDZO "$PWD/dist/WalletSkin Studio.dmg"
  hdiutil verify "$PWD/dist/WalletSkin Studio.dmg"

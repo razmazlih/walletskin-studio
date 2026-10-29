@@ -22,6 +22,7 @@ struct ApplySnapshot {
     @Published var pending: ApplySnapshot?
     @Published var lastSubmitted: ApplySnapshot?
     @Published var experimentalRiskAccepted = false
+    @Published var needsDeveloperTools = false
 }
 struct StudioView: View {
     @StateObject private var device = DeviceService()
@@ -36,6 +37,7 @@ struct StudioView: View {
         return (device.isMock ? "Demo card \(ordinal)" : "Card \(ordinal)") + " · " + fingerprint
     }
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment:.leading,spacing:22) {
                 HStack {
@@ -44,10 +46,12 @@ struct StudioView: View {
                     Spacer()
                     Toggle("English",isOn:$state.english).toggleStyle(.switch).fixedSize()
                 }
+                quickStart(proxy)
+                if state.needsDeveloperTools { setupHelp }
                 if device.isMock {
                     Label(t("מצב הדגמה — אין גישה או כתיבה ל־iPhone","MOCK MODE — no iPhone access or writes"),systemImage:"testtube.2").font(.headline).foregroundStyle(.orange)
                 }
-                group(t("חיבור ה־iPhone","iPhone connection"),icon:"iphone") {
+                group(t("1 · חיבור ה־iPhone","1 · Connect iPhone"),icon:"iphone") {
                     HStack(alignment:.top,spacing:20) {
                         VStack(alignment:.leading,spacing:9) {
                             Text(t("חברו בכבל USB, פתחו את נעילת ה־iPhone ואשרו ׳לתת אמון׳ אם תתבקשו.","Connect USB, unlock your iPhone, and accept Trust if prompted.")).foregroundStyle(.secondary)
@@ -64,12 +68,12 @@ struct StudioView: View {
                         }
                         Spacer()
                         VStack {
-                            Button(t("רענון וחיבור מחדש","Refresh connection")) { device.refresh() }.disabled(device.busy)
+                            Button(t("רענון וחיבור מחדש","Refresh connection")) { device.refresh() }.disabled(device.busy || state.needsDeveloperTools)
                             Toggle(t("מצב הדגמה","Mock mode"),isOn:$device.isMock).toggleStyle(.switch).disabled(device.busy)
                         }.fixedSize(horizontal:true,vertical:false)
                     }
                 }
-                group(t("הכרטיסים שלי","My Wallet cards"),icon:"rectangle.stack") {
+                group(t("2 · בחירת הכרטיס","2 · Choose card"),icon:"rectangle.stack") {
                     VStack(alignment:.leading,spacing:12) {
                         Text(t("לחצו על גילוי ואז פתחו את Wallet ב־iPhone והפעילו את הכרטיס הרצוי. הזיהוי מבוסס על מזהה נכס; שם הבנק והתמונה המקורית אינם נקראים. המספר המקומי אינו סדר הכרטיסים ב־Wallet.","Start discovery, then open Wallet on iPhone and activate the intended card. Discovery identifies an artwork asset; bank names and original artwork are not read. Local numbering does not reflect Wallet card order.")).font(.callout).foregroundStyle(.secondary)
                         Button(t("גילוי כרטיס פעיל (45 שניות)","Discover active card (45 seconds)")) { device.discover() }.disabled(device.busy || device.selectedDeviceID == nil)
@@ -109,7 +113,8 @@ struct StudioView: View {
                         }
                     }
                 }
-                group(t("סטודיו לעיצוב","Artwork studio"),icon:"slider.horizontal.3") {
+                group(t("3 · בחירת העיצוב","3 · Choose artwork"),icon:"slider.horizontal.3") {
+                    starterDesigns
                     ViewThatFits(in:.horizontal) {
                     HStack(alignment:.top,spacing:24) {
                         ArtworkCanvas(editor:editor).frame(minWidth:400,maxWidth:610).onDrop(of:[UTType.fileURL],isTargeted:nil) { providers in
@@ -118,13 +123,9 @@ struct StudioView: View {
                             return true
                         }
                         VStack(alignment:.leading,spacing:15) {
-                            Toggle(t("מילוי מלא ללא שוליים (מתיחה)", "Fill entire card (stretch)"),isOn:$editor.stretchToFill)
-                            Toggle(t("הסרת שוליים בהירים מהתמונה", "Remove light image margins"),isOn:$editor.removeLightMargins)
-                            if !editor.stretchToFill { Toggle(t("שמירת יחס מקורי עם שוליים", "Keep original aspect ratio with padding"),isOn:$editor.fitWholeImage) }
-                            Button(t("בחירת תמונה…","Choose image…")) { editor.choose() }.buttonStyle(.borderedProminent)
+                            advancedAdjustments
+                            Button(t("בחירת תמונה מהמחשב…","Choose image from Mac…")) { editor.choose() }.buttonStyle(.borderedProminent)
                             Text(editor.stretchToFill ? t("התמונה ממלאת את כל הכרטיס. יחס הממדים משתנה לפי הצורך, ללא שוליים שהאפליקציה מוסיפה.","The image fills the entire card. Its aspect ratio changes as needed; the app adds no padding.") : editor.fitWholeImage ? t("התמונה הסופית נשמרת במלואה ללא חיתוך או עיוות. אם היחס שונה מ־1536×969 יתווספו שוליים לבנים.","The final image stays complete without cropping or distortion. Other aspect ratios receive white padding.") : t("גררו להזזה ושנו את הזום לחיתוך. המקור נשאר ללא שינוי.","Drag to reposition and adjust zoom to crop. The original stays unchanged.")).font(.callout).foregroundStyle(.secondary)
-                            Text(t("זום","Zoom")); Slider(value:$editor.zoom,in:1...4).disabled(editor.image == nil || editor.fitWholeImage || editor.stretchToFill)
-                            Button(t("איפוס חיתוך","Reset crop")) { editor.zoom = 1; editor.pan = .zero }.disabled(editor.image == nil || editor.fitWholeImage || editor.stretchToFill)
                             Text("1536 × 969 · PNG").font(.caption.monospaced()).foregroundStyle(.secondary)
                             Button(t("ייצוא PNG…","Export PNG…")) { library.save(editor); editor.export() }.disabled(editor.image == nil)
                         }.frame(width:245)
@@ -135,16 +136,12 @@ struct StudioView: View {
                             _ = provider.loadObject(ofClass:URL.self) { url,_ in if let url { Task { @MainActor in editor.load(url) } } }; return true
                         }
                         HStack { Button(t("בחירת תמונה…","Choose image…")) { editor.choose() }; Button(t("ייצוא PNG…","Export PNG…")) { library.save(editor); editor.export() }.disabled(editor.image == nil) }
-                        Toggle(t("מילוי מלא ללא שוליים (מתיחה)", "Fill entire card (stretch)"),isOn:$editor.stretchToFill)
-                            Toggle(t("הסרת שוליים בהירים מהתמונה", "Remove light image margins"),isOn:$editor.removeLightMargins)
-                            if !editor.stretchToFill { Toggle(t("שמירת יחס מקורי עם שוליים", "Keep original aspect ratio with padding"),isOn:$editor.fitWholeImage) }
-                        Slider(value:$editor.zoom,in:1...4).disabled(editor.image == nil || editor.fitWholeImage || editor.stretchToFill)
-                        Text(t("גררו להזזה · זום לחיתוך · 1536 × 969", "Drag to pan · zoom to crop · 1536 × 969")).font(.caption).foregroundStyle(.secondary)
+                        advancedAdjustments
                     }
                     }
                     if let error = editor.error { Text(error).foregroundStyle(.red) }
                 }
-                group(t("החלה על הכרטיס","Apply artwork"),icon:"lock.shield") {
+                group(t("4 · בדיקה ואישור","4 · Review and confirm"),icon:"lock.shield") {
                     VStack(alignment:.leading,spacing:12) {
                         Text(t("החלה ניסיונית באישורכם: קיים סיכון לדריסת שינויים ולשחזור לא עקבי של נתוני Books. הסיכון לא תוקן. נדרשים זיהוי חי ואישור מפורש לכל החלה.","Experimental Apply at your request: Books changes may be overwritten or restored inconsistently. This risk is unresolved. Fresh discovery and explicit acceptance are required for every Apply.")).foregroundStyle(.red)
                         Text(t("ההחלה משתמשת במנגנון הלא רשמי של AirCard וכותבת גם מטא־נתונים וקבצי ביניים של Books/Media. אין גיבוי או שחזור מקורי מאומת; ניתוק עלול להשאיר פעולה חלקית. בכל החלה נדרש אישור מפורש.","Applying uses AirCard’s unofficial mechanism and also writes Books/Media staging files and sync metadata. Original artwork backup and restoration are unavailable; disconnection may leave an incomplete operation. Every Apply requires explicit confirmation.")).foregroundStyle(.orange)
@@ -160,6 +157,9 @@ struct StudioView: View {
                             if let target = state.lastSubmitted { Text(target.deviceTitle + " · " + target.cardTitle).font(.headline) }
                             Text(t("ההעברה הסתיימה, אך תוצאת Wallet טרם אומתה. סגרו ופתחו שוב את Wallet ובדקו את הכרטיס שנבחר. אם התמונה עדיין לא מתעדכנת, הפעילו מחדש את ה־iPhone.","Transfer completed; Wallet appearance is unverified. Close and reopen Wallet and inspect the selected card. If artwork is still stale, restart the iPhone.")).font(.callout)
                             Button(t("ראיתי את העיצוב בכרטיס הנכון ב־Wallet","I see this artwork on the correct Wallet card")) { device.confirmWalletAppearance() }
+                        }
+                        if !device.canApply || editor.image == nil {
+                            Label(nextAction, systemImage:"info.circle").font(.callout).foregroundStyle(.secondary)
                         }
                         if let actionError = state.actionError { Text(actionError).foregroundStyle(.red) }
                     }
@@ -186,11 +186,102 @@ struct StudioView: View {
                     }.padding(28).frame(width:490).environment(\.layoutDirection,state.english ? .leftToRight:.rightToLeft)
                 }
             }
-            .onAppear { device.refresh() }
+            .onAppear {
+                state.needsDeveloperTools = !SetupSupport.toolsAvailable
+                if ProcessInfo.processInfo.arguments.contains("--demo") { device.isMock = true }
+                else if !state.needsDeveloperTools { device.refresh() }
+            }
             .onDisappear { library.save(editor) }
             .onChange(of:device.selectedCardID) { _,_ in library.switchCard(device:device.selectedDeviceID,card:device.selectedCardID,editor:editor) }
             .onChange(of:device.selectedDeviceID) { _,_ in library.switchCard(device:device.selectedDeviceID,card:device.selectedCardID,editor:editor) }
             .onReceive(NotificationCenter.default.publisher(for:NSApplication.willTerminateNotification)) { _ in library.save(editor) }
+    }
+        }
+    private var nextAction: String {
+        if state.needsDeveloperTools && !device.isMock { return t("לפני החיבור הראשון: התקינו את רכיב Apple בעזרת הכפתור למטה.", "Before connecting: install the Apple component using the button below.") }
+        if device.selectedDeviceID == nil { return t("השלב הבא: חברו iPhone בכבל ולחצו על ׳רענון וחיבור מחדש׳.", "Next: connect iPhone by USB, then click Refresh connection.") }
+        if !device.isMock, let phone = device.devices.first(where: { $0.id == device.selectedDeviceID }), !phone.eligible { return t("המכשיר אינו נתמך או שטרם אושר אמון. בדקו את החיבור ואת הודעת התאימות בסעיף 1.", "Device unsupported or not yet trusted. Check connection and compatibility in step 1.") }
+        if !device.canApply { return t("השלב הבא: לחצו על ׳גילוי כרטיס פעיל׳, הציגו את הכרטיס ב־iPhone ובחרו את הכרטיס שזוהה. זיהוי קודם בלבד אינו מספיק להחלה.", "Next: discover an active card, display it on iPhone, and select the discovered card. History alone cannot authorize Apply.") }
+        if editor.image == nil { return t("השלב הבא: בחרו עיצוב מוכן או תמונה מהמחשב בסעיף 3.", "Next: choose a starter design or an image from your Mac in step 3.") }
+        return t("התמונה מוכנה לבדיקה. עברו לסעיף 4 וקראו את האזהרה לפני אישור.", "Artwork is ready to review. Read the warning in step 4 before confirming.")
+    }
+    private func quickStart(_ proxy: ScrollViewProxy) -> some View {
+        VStack(alignment:.leading,spacing:12) {
+            Text(t("מתחילים כאן", "Start here")).font(.title2.bold())
+            Text(t("1. מחברים iPhone  ←  2. מזהים כרטיס  ←  3. בוחרים עיצוב  ←  4. בודקים ומאשרים", "1. Connect iPhone  →  2. Discover card  →  3. Choose artwork  →  4. Review and confirm")).font(.headline).fixedSize(horizontal:false,vertical:true)
+            Text(t("אפשר לבחור עיצוב ולייצא תמונה גם בלי לחבר טלפון. לשינוי ב־Wallet נדרשים Mac ו־iPhone מחובר בכבל USB.", "Choose artwork and export an image without a phone. Changing Wallet requires a Mac and an iPhone connected by USB.")).foregroundStyle(.secondary)
+            HStack {
+                ForEach(Array([("1 · חיבור", "1 · Connect", "iphone"), ("2 · כרטיס", "2 · Card", "rectangle.stack"), ("3 · עיצוב", "3 · Artwork", "slider.horizontal.3"), ("4 · אישור", "4 · Review", "lock.shield")].enumerated()),id: \.offset) { _, step in
+                    Button(t(step.0,step.1)) { withAnimation { proxy.scrollTo(step.2,anchor:.top) } }.buttonStyle(.bordered)
+                }
+            }
+            Label(nextAction,systemImage:"arrow.forward.circle.fill").font(.callout)
+            Text(t("החלה על iPhone היא ניסיונית: קיים סיכון לנתוני Books ואין שחזור מאומת לתמונת המקור. עיצוב וייצוא מקומיים זמינים בלי החלה.", "Applying to iPhone is experimental: Books data is at risk and original artwork restoration is unverified. You can design and export locally without applying.")).font(.caption).foregroundStyle(.orange)
+            Button(t("איך מתקינים ומשתמשים? מדריך עם תמונות", "Installation and usage guide with pictures")) {
+                NSWorkspace.shared.open(URL(string:"https://github.com/razmazlih/walletskin-studio#readme")!)
+            }.buttonStyle(.link)
+        }.padding(20).frame(maxWidth:.infinity,alignment:.leading)
+            .background(Color.accentColor.opacity(0.08)).clipShape(RoundedRectangle(cornerRadius:20))
+    }
+    private var setupHelp: some View {
+        VStack(alignment:.leading,spacing:10) {
+            Label(t("הכנה חד־פעמית למק הזה", "One-time Mac setup"),systemImage:"shippingbox").font(.headline)
+            Text(t("לחיבור לאייפון נדרש רכיב כלים של Apple, שכולל Python. לחצו על התקנה ואשרו בחלון של Apple. אחרי שההתקנה תסתיים, חזרו לכאן ולחצו על ׳בדיקת ההתקנה׳. אין צורך לכתוב פקודות.", "iPhone connection needs Apple's tools, including Python. Click Install and confirm Apple's dialog. When installation finishes, return and click Check installation. No commands needed."))
+            HStack {
+                Button(t("התקנת רכיב Apple…", "Install Apple component…")) {
+                    do { try SetupSupport.requestToolsInstallation() }
+                    catch { state.actionError = t("לא ניתן לפתוח את מתקין Apple. ראו את פתרון התקלות ב־README.", "Could not open Apple's installer. See README troubleshooting.") }
+                }.buttonStyle(.borderedProminent)
+                Button(t("בדיקת ההתקנה", "Check installation")) {
+                    state.needsDeveloperTools = !SetupSupport.toolsAvailable
+                    if !state.needsDeveloperTools && !device.isMock { device.refresh() }
+                }
+            }
+            if let error = state.actionError { Text(error).foregroundStyle(.red) }
+        }.padding(20).background(Color.orange.opacity(0.10)).clipShape(RoundedRectangle(cornerRadius:20))
+    }
+    private var advancedAdjustments: some View {
+        DisclosureGroup(t("התאמה מתקדמת (לא חובה)", "Advanced adjustments (optional)")) {
+            VStack(alignment:.leading,spacing:12) {
+                Toggle(t("מילוי מלא ללא שוליים (מתיחה)", "Fill entire card (stretch)"),isOn:$editor.stretchToFill)
+                Toggle(t("הסרת שוליים בהירים מהתמונה", "Remove light image margins"),isOn:$editor.removeLightMargins)
+                if !editor.stretchToFill { Toggle(t("שמירת יחס מקורי עם שוליים", "Keep original aspect ratio with padding"),isOn:$editor.fitWholeImage) }
+                Text(t("זום לחיתוך ידני", "Zoom for manual crop"))
+                Slider(value:$editor.zoom,in:1...4).disabled(editor.image == nil || editor.fitWholeImage || editor.stretchToFill)
+                Button(t("איפוס חיתוך", "Reset crop")) { editor.zoom = 1; editor.pan = .zero }.disabled(editor.image == nil || editor.fitWholeImage || editor.stretchToFill)
+            }.padding(.top,8)
+        }
+    }
+    private var starterDesigns: some View {
+        VStack(alignment:.leading,spacing:10) {
+            Text(t("בלי לחפש תמונות: בחרו עיצוב מוכן", "Start with a ready-made design")).font(.headline)
+            LazyVGrid(columns:[GridItem(.adaptive(minimum:170))],spacing:12) {
+                ForEach(["midnight", "sage", "sunset"],id: \.self) { name in
+                    if let url = Bundle.main.url(forResource:name,withExtension:"png",subdirectory:"StarterDesigns"), let image = NSImage(contentsOf:url) {
+                        Button { editor.load(url) } label: {
+                            VStack(alignment:.leading,spacing:7) {
+                                Image(nsImage:image).resizable().aspectRatio(1536.0/969.0,contentMode:.fit).clipShape(RoundedRectangle(cornerRadius:10))
+                                HStack {
+                                    Text(designTitle(name)).font(.callout.bold()).foregroundStyle(.primary)
+                                    Spacer()
+                                    if editor.loadedURL == url { Image(systemName:"checkmark.circle.fill").foregroundStyle(Color.accentColor) }
+                                }
+                            }.padding(8).background(Color.primary.opacity(0.04)).clipShape(RoundedRectangle(cornerRadius:14)).overlay(RoundedRectangle(cornerRadius:14).stroke(editor.loadedURL == url ? Color.accentColor : Color.clear,lineWidth:2))
+                        }.buttonStyle(.plain).disabled(device.busy || state.confirmation)
+                            .accessibilityLabel(t("בחירת עיצוב ", "Choose design ")+designTitle(name))
+                            .accessibilityValue(editor.loadedURL == url ? t("נבחר", "Selected") : "")
+                    }
+                }
+            }
+            Text(t("עיצובים מקוריים הכלולים באפליקציה. אפשר להחליף ביניהם או לבחור תמונה משלכם.", "Original artwork included with the app. Switch designs or choose your own image.")).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private func designTitle(_ name:String) -> String {
+        switch name {
+        case "midnight": return t("לילה כחול", "Midnight")
+        case "sage": return t("מרווה", "Sage")
+        default: return t("שקיעה", "Sunset")
+        }
     }
     private func prepareConfirmation() {
         guard !device.busy, let phone = device.devices.first(where: { $0.id == device.selectedDeviceID }),
@@ -218,6 +309,6 @@ struct StudioView: View {
         device.apply(imageURL:pending.imageURL,confirmed:true,experimentalRiskAccepted:state.experimentalRiskAccepted)
     }
     private func group<Content:View>(_ title:String,icon:String,@ViewBuilder content:() -> Content) -> some View {
-        VStack(alignment:.leading,spacing:16) { Label(title,systemImage:icon).font(.title3.bold()); content() }.padding(20).frame(maxWidth:.infinity,alignment:.leading).background(Color(nsColor:.controlBackgroundColor)).clipShape(RoundedRectangle(cornerRadius:20)).overlay(RoundedRectangle(cornerRadius:20).stroke(Color.primary.opacity(0.06)))
+        VStack(alignment:.leading,spacing:16) { Label(title,systemImage:icon).font(.title3.bold()); content() }.padding(20).frame(maxWidth:.infinity,alignment:.leading).background(Color(nsColor:.controlBackgroundColor)).clipShape(RoundedRectangle(cornerRadius:20)).overlay(RoundedRectangle(cornerRadius:20).stroke(Color.primary.opacity(0.06))).id(icon)
     }
 }

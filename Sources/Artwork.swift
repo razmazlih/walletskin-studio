@@ -14,6 +14,7 @@ enum ArtworkError: LocalizedError {
 }
 @MainActor final class ArtworkEditor: ObservableObject {
     @Published var image: NSImage?
+    @Published private(set) var loadedURL: URL?
     @Published var stretchToFill = true
     @Published var removeLightMargins = true { didSet { updateEffectiveImage() } }
     private(set) var originalImage: NSImage?
@@ -26,6 +27,7 @@ enum ArtworkError: LocalizedError {
     let width = 1536
     let height = 969
     func load(_ url: URL) {
+        loadedURL = nil
         do {
             let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             guard size <= 80 * 1024 * 1024 else { throw ArtworkError.tooLarge }
@@ -36,13 +38,14 @@ enum ArtworkError: LocalizedError {
                   w > 0, h > 0 else { throw ArtworkError.invalid }
             guard Double(w) * Double(h) <= 60_000_000 else { throw ArtworkError.tooLarge }
             guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceCreateThumbnailWithTransform: true, kCGImageSourceThumbnailMaxPixelSize: max(w,h)] as CFDictionary) else { throw ArtworkError.invalid }
+            loadedURL = url
             originalImage = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
             trimmedImage = Self.trimLightMargins(cg)
             stretchToFill = true; removeLightMargins = true; updateEffectiveImage()
             fitWholeImage = true; zoom = 1; pan = .zero; dragStart = nil; error = nil
         } catch { originalImage = nil; trimmedImage = nil; image = nil; stretchToFill = true; removeLightMargins = true; zoom = 1; pan = .zero; self.error = error.localizedDescription }
     }
-    func clear() { originalImage = nil; trimmedImage = nil; image = nil; stretchToFill = true; removeLightMargins = true; fitWholeImage = true; zoom = 1; pan = .zero; dragStart = nil; error = nil }
+    func clear() { loadedURL = nil; originalImage = nil; trimmedImage = nil; image = nil; stretchToFill = true; removeLightMargins = true; fitWholeImage = true; zoom = 1; pan = .zero; dragStart = nil; error = nil }
     private func updateEffectiveImage() {
         image = removeLightMargins ? (trimmedImage ?? originalImage) : originalImage
     }

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="300" viewBox="0 0 1100 300">
+<rect width="1100" height="300" rx="26" fill="#eef1f7"/>
+<g font-family="Arial,sans-serif" text-anchor="middle" fill="#24354d">
+<text x="550" y="44" font-size="24" font-weight="bold">התקנה במק — בלי טרמינל</text>
+<rect x="665" y="78" width="365" height="165" rx="16" fill="white"/>
+<rect x="795" y="101" width="105" height="64" rx="13" fill="#334d77"/><text x="847" y="145" fill="white" font-size="34">W</text>
+<text x="847" y="197" font-size="22">WalletSkin Studio</text><text x="847" y="225" font-size="16">האפליקציה בקובץ שהורדתם</text>
+<path d="M620 158H485m0 0 20-18m-20 18 20 18" fill="none" stroke="#6787ad" stroke-width="6"/>
+<text x="550" y="205" font-size="17">גוררים לכאן</text>
+<rect x="70" y="78" width="365" height="165" rx="16" fill="white"/>
+<path d="M198 112h44l15 13h50v49H198z" fill="#86b7df"/><text x="252" y="160" font-size="32" fill="white">A</text>
+<text x="252" y="202" font-size="22">Applications</text><text x="252" y="227" font-size="16">פותחים מכאן בסיום ההעתקה</text>
+</g></svg>
