@@ -69,17 +69,23 @@ def devices():
     if result.returncode:
         raise RuntimeError('device_detection_failed')
     rows = json.loads(result.stdout)
-    clean = []
+    clean = {}
     for row in rows:
         ident = row.get('udid', '')
         if not UDID.fullmatch(ident):
             continue
         product = row.get('product', '')
         version = row.get('version', '')
+        # A bare notification is not evidence of a connected iPhone. Keep only
+        # successfully identified iPhones; never merge different device IDs.
+        if not product.startswith('iPhone') or not version:
+            continue
         eligible, reason = compatibility(version, product, row.get('buildVersion', ''))
-        clean.append(dict(id=ident, name=product or 'iPhone', product=product,
-                          version=version, eligible=eligible, reason=reason))
-    return clean
+        candidate = dict(id=ident, name=product, product=product,
+                         version=version, eligible=eligible, reason=reason)
+        if ident not in clean or eligible or not clean[ident]['eligible']:
+            clean[ident] = candidate
+    return list(clean.values())
 
 def require_device(identifier):
     if not isinstance(identifier, str) or not UDID.fullmatch(identifier):

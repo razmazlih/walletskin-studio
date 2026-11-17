@@ -8,13 +8,17 @@ WalletSkin Studio מגיעה כאפליקציה ארוזה עם ממשק בעב�
 
 בוחרים תמונה, רואים תצוגה מקדימה ומייצאים PNG. לחיבור לאייפון משתמשים בכבל USB. אין שרת, הרשמה לאפליקציה או מנוי.
 
-[**⬇ הורדת האפליקציה למק — גרסה 0.3.2**](https://github.com/razmazlih/walletskin-studio/releases/download/v0.3.2/WalletSkin-Studio-0.3.2.dmg)
+[**⬇ הורדת האפליקציה למק — גרסה 0.3.3**](https://github.com/razmazlih/walletskin-studio/releases/download/v0.3.3/WalletSkin-Studio-0.3.3.dmg)
 
-[דף הגרסה ופרטי ההורדה](https://github.com/razmazlih/walletskin-studio/releases/tag/v0.3.2) · [התקנה מאפס](#installation) · [מדריך שימוש](#usage) · [פתרון תקלות](#troubleshooting)
+[דף הגרסה ופרטי ההורדה](https://github.com/razmazlih/walletskin-studio/releases/tag/v0.3.3) · [התקנה מאפס](#installation) · [מדריך שימוש](#usage) · [פתרון תקלות](#troubleshooting)
 
 > **לפני שמתחילים:** עיצוב וייצוא תמונה זמינים בלי טלפון. החלת התמונה על iPhone עדיין ניסיונית ולא אומתה מקצה לקצה. המנגנון עלול לפגוע בנתוני Books, ואין שחזור מאומת לתמונת הכרטיס המקורית. קראו את האזהרה לפני אישור שינוי.
 
 ![ארבעת שלבי השימוש: חיבור, זיהוי כרטיס, בחירת עיצוב ובדיקה](docs/images/first-run.svg)
+
+## עדכון 0.3.3
+
+תוקנה הצגת התראות חיבור ללא פרטי מכשיר כאייפון נוסף. הרשימה מציגה רק מכשירי iPhone שזוהו בהצלחה, והודעת התאימות מבדילה בין חיבור תקין לבין גרסת iOS שאינה נתמכת. iOS 27.2 אינו נתמך להחלה; אישור אמון אינו משנה את מגבלת הגרסה.
 
 ## מה צריך להכין?
 
@@ -30,7 +34,7 @@ WalletSkin Studio מגיעה כאפליקציה ארוזה עם ממשק בעב�
 ## מתקינים מאפס — בלי טרמינל
 
 1. **מקבלים גישה.** נכנסים ל־GitHub ומאשרים את ההזמנה למאגר. אם הקישור מציג 404, ודאו שנכנסתם לחשבון שהוזמן.
-2. **מורידים את האפליקציה.** [לוחצים כאן להורדת המתקין](https://github.com/razmazlih/walletskin-studio/releases/download/v0.3.2/WalletSkin-Studio-0.3.2.dmg). שם הקובץ הוא **WalletSkin-Studio-0.3.2.dmg**. אם אתם בדף הגרסה, בחרו בקובץ הזה תחת **Assets**. אין צורך בכפתור Code או בקבצים בשם Source code.
+2. **מורידים את האפליקציה.** [לוחצים כאן להורדת המתקין](https://github.com/razmazlih/walletskin-studio/releases/download/v0.3.3/WalletSkin-Studio-0.3.3.dmg). שם הקובץ הוא **WalletSkin-Studio-0.3.3.dmg**. אם אתם בדף הגרסה, בחרו בקובץ הזה תחת **Assets**. אין צורך בכפתור Code או בקבצים בשם Source code.
 3. **פותחים את ההורדה.** ב־Finder נכנסים ל־**Downloads / הורדות** ולוחצים פעמיים על קובץ ה־DMG.
 4. **גוררים לאפליקציות.** בחלון שנפתח גוררים את **WalletSkin Studio** אל **Applications / יישומים** וממתינים לסיום ההעתקה.
 5. **פותחים מהמק.** ב־Finder פותחים **Applications / יישומים**, ואז את **WalletSkin Studio**. אחרי ההעתקה אפשר להוציא את דיסק ההתקנה מסרגל הצד של Finder.

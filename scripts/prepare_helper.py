@@ -10,6 +10,13 @@ text = text.replace('if (!AMDeviceIsPaired(info->device)) AMDevicePair(info->dev
 text = text.replace('if (!AMDeviceIsPaired(device)) AMDevicePair(device);', '/* Pair in Finder explicitly. */')
 text = text.replace('extern int AMDevicePair(AMDeviceRef device);', '')
 text = text.replace('@"name": @"DeviceName",', '')
+# Retry incomplete notifications instead of letting an early failed session
+# permanently hide a later successful connection for the same identifier.
+text = text.replace('if ([seen[@"udid"] isEqual:udid]) return;',
+                    'if ([seen[@"udid"] isEqual:udid] && [seen[@"product"] length] && [seen[@"version"] length]) return;')
+text = text.replace('[DiscoveredDevices addObject:entry];',
+                    '[DiscoveredDevices filterUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSDictionary *row, NSDictionary *bindings) { return ![row[@"udid"] isEqual:udid]; }]];\n    [DiscoveredDevices addObject:entry];')
+
 text = text.replace('expectedCount <= 32', 'expectedCount <= 3')
 text = text.replace('AMDevicePair(session->device);', '/* Pair in Finder explicitly. */')
 start = text.index('static BOOL BuildMatches(')

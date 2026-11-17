@@ -8,6 +8,21 @@ struct ConnectedDevice: Codable, Identifiable, Equatable {
     let version: String
     let eligible: Bool
     let reason: String
+
+    var displayName: String {
+        let label = name == product ? product : "\(name) · \(product)"
+        return version.isEmpty ? label : "\(label) · iOS \(version)"
+    }
+
+    func connectionStatus(english: Bool) -> String {
+        switch reason {
+        case "mock": return english ? "Demo device" : "מכשיר הדגמה"
+        case "unsupported_version": return english ? "Connected · iOS \(version) outside supported range (18.0–27.0.1)" : "מחובר · iOS \(version) מחוץ לטווח הנתמך (18.0–27.0.1)"
+        case "unknown_or_beta_build": return english ? "Connected · beta or unknown build; Apply blocked" : "מחובר · גרסת בטא או Build לא מזוהה; ההחלה חסומה"
+        case "unknown_version": return english ? "Connected · iOS version could not be verified" : "מחובר · לא ניתן לאמת את גרסת iOS"
+        default: return english ? "Connected · reported range; unverified" : "מחובר · בטווח המדווח; התאימות טרם אומתה"
+        }
+    }
 }
 struct WalletCard: Codable, Identifiable, Equatable {
     let id: String
@@ -79,6 +94,7 @@ private final class ScanControl: @unchecked Sendable {
     }
 
     var statusEnglish: String {
+        if let phone = devices.first(where: { $0.id == selectedDeviceID }), status == phone.connectionStatus(english: false) { return phone.connectionStatus(english: true) }
         switch status {
         case "הסריקה נעצרה. לא התקבל זיהוי חדש; כרטיסים קודמים נשמרו.": return "Scan stopped. No new discovery; previous cards were retained."
         case "עוצר את הסריקה…": return "Stopping discovery…"
@@ -156,7 +172,11 @@ private final class ScanControl: @unchecked Sendable {
                     let known = try await Self.execute(BridgeRequest(command: "known_cards", deviceID: identifier))
                     if selectedDeviceID == identifier { cards = known.cards ?? []; selectedCardID = cards.first?.id }
                 }
-                status = devices.isEmpty ? "לא נמצא iPhone. חברו USB ואשרו אמון ב־Finder." : "המכשיר זוהה. טווח הגרסאות מבוסס על טענת AirCard; התאימות לא אומתה במכשיר."
+                if let phone = devices.first(where: { $0.id == selectedDeviceID }), !phone.eligible {
+                    status = phone.connectionStatus(english: false)
+                } else {
+                    status = devices.isEmpty ? "לא נמצא iPhone. חברו USB ואשרו אמון ב־Finder." : "המכשיר זוהה. טווח הגרסאות מבוסס על טענת AirCard; התאימות לא אומתה במכשיר."
+                }
             } catch { devices = []; selectedDeviceID = nil; status = Self.message(error) }
         }
     }

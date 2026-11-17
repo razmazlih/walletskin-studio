@@ -17,6 +17,22 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(bridge.compatibility('27.0.1', 'iPhone18,1', '24A100a')[0])
         self.assertFalse(bridge.compatibility('27.0.1', '', '24A100')[0])
         self.assertFalse(bridge.compatibility('27.0.1', 'iPhone18,1', '')[0])
+    def test_devices_only_identified_iphones_and_unique_ids(self):
+        import json
+        from types import SimpleNamespace
+        rows = [dict(udid='device-111'),
+                dict(udid='device-111', product='iPhone18,2', version='27.2', buildVersion='24B119'),
+                dict(udid='device-222'),
+                dict(udid='device-333', product='iPad16,1', version='27.0', buildVersion='24A100'),
+                dict(udid='device-444', product='iPhone18,2', version='27.0.1', buildVersion='24A100'),
+                dict(udid='device-444', product='iPhone18,2', version='27.0.1', buildVersion='24A100')]
+        with patch.object(bridge.Path, 'is_file', return_value=True), patch.object(bridge.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stdout=json.dumps(rows))):
+            devices = bridge.devices()
+        self.assertEqual([d['id'] for d in devices], ['device-111', 'device-444'])
+        self.assertEqual(devices[0]['reason'], 'unsupported_version')
+        self.assertFalse(devices[0]['eligible'])
+        self.assertTrue(devices[1]['eligible'])
+
     def test_path_only_and_sanitization(self):
         ident = 'a' * 27 + '='
         self.assertEqual(bridge.parse_card('/var/mobile/Library/Passes/Cards/' + ident + '.pkpass/cardBackground.png'), ident)

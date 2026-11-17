@@ -54,15 +54,15 @@ struct StudioView: View {
                 group(t("1 · חיבור ה־iPhone","1 · Connect iPhone"),icon:"iphone") {
                     HStack(alignment:.top,spacing:20) {
                         VStack(alignment:.leading,spacing:9) {
-                            Text(t("חברו בכבל USB, פתחו את נעילת ה־iPhone ואשרו ׳לתת אמון׳ אם תתבקשו.","Connect USB, unlock your iPhone, and accept Trust if prompted.")).foregroundStyle(.secondary)
+                            Text(t("מוצגים מכשירי iPhone שפרטיהם נקראו בהצלחה. אם המכשיר חסר, חברו USB, פתחו נעילה ואשרו אמון ב־Finder.","Only successfully identified iPhones are listed. If yours is missing, connect USB, unlock it, and confirm Trust in Finder.")).foregroundStyle(.secondary)
                             if device.devices.isEmpty { Text(t("לא זוהה מכשיר מחובר","No connected device detected")).font(.headline) }
                             ForEach(device.devices) { phone in
                                 HStack {
                                     Button { device.selectedDeviceID = phone.id; device.selectedCardID = nil } label: {
-                                        Label("\(device.isMock && state.english ? "Demo iPhone" : phone.name) · \(phone.product) · iOS \(phone.version)",systemImage:device.selectedDeviceID == phone.id ? "checkmark.circle.fill":"circle")
+                                        Label(device.isMock && state.english ? "Demo iPhone · iOS \(phone.version)" : phone.displayName,systemImage:device.selectedDeviceID == phone.id ? "checkmark.circle.fill":"circle")
                                     }.buttonStyle(.borderless).disabled(device.busy || state.confirmation)
                                     Spacer()
-                                    Text(phone.eligible ? t("בטווח המדווח; טרם אומת","Reported range; unverified") : t("לא נתמך או ללא אמון","Unsupported or untrusted")).font(.caption).foregroundStyle(phone.eligible ? Color.blue:Color.orange)
+                                    Text(phone.connectionStatus(english: state.english)).font(.caption).foregroundStyle(phone.eligible ? Color.blue:Color.orange)
                                 }
                             }
                         }
@@ -200,7 +200,7 @@ struct StudioView: View {
     private var nextAction: String {
         if state.needsDeveloperTools && !device.isMock { return t("לפני החיבור הראשון: התקינו את רכיב Apple בעזרת הכפתור למטה.", "Before connecting: install the Apple component using the button below.") }
         if device.selectedDeviceID == nil { return t("השלב הבא: חברו iPhone בכבל ולחצו על ׳רענון וחיבור מחדש׳.", "Next: connect iPhone by USB, then click Refresh connection.") }
-        if !device.isMock, let phone = device.devices.first(where: { $0.id == device.selectedDeviceID }), !phone.eligible { return t("המכשיר אינו נתמך או שטרם אושר אמון. בדקו את החיבור ואת הודעת התאימות בסעיף 1.", "Device unsupported or not yet trusted. Check connection and compatibility in step 1.") }
+        if !device.isMock, let phone = device.devices.first(where: { $0.id == device.selectedDeviceID }), !phone.eligible { return t("ההחלה חסומה עקב תאימות המכשיר. קראו את הסיבה המדויקת בסעיף 1.", "Apply is blocked by device compatibility. Read the exact reason in step 1.") }
         if !device.canApply { return t("השלב הבא: לחצו על ׳גילוי כרטיס פעיל׳, הציגו את הכרטיס ב־iPhone ובחרו את הכרטיס שזוהה. זיהוי קודם בלבד אינו מספיק להחלה.", "Next: discover an active card, display it on iPhone, and select the discovered card. History alone cannot authorize Apply.") }
         if editor.image == nil { return t("השלב הבא: בחרו עיצוב מוכן או תמונה מהמחשב בסעיף 3.", "Next: choose a starter design or an image from your Mac in step 3.") }
         return t("התמונה מוכנה לבדיקה. עברו לסעיף 4 וקראו את האזהרה לפני אישור.", "Artwork is ready to review. Read the warning in step 4 before confirming.")
