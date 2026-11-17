@@ -39,8 +39,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleName</key><string>WalletSkin Studio</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.3.3</string>
-<key>CFBundleVersion</key><string>10</string>
+<key>CFBundleShortVersionString</key><string>0.4.0</string>
+<key>CFBundleVersion</key><string>11</string>
 <key>CFBundleDevelopmentRegion</key><string>he</string>
 <key>CFBundleLocalizations</key><array><string>he</string><string>en</string></array>
 <key>LSMinimumSystemVersion</key><string>14.0</string>

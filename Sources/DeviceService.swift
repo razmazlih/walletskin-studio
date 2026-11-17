@@ -235,8 +235,9 @@ private final class ScanControl: @unchecked Sendable {
 
     private func startScanCountdown() {
         guard scanning else { return }
-        let deadline = Date().addingTimeInterval(45)
-        scanRemainingSeconds = 45
+        let duration = isMock ? 15 : 45
+        let deadline = Date().addingTimeInterval(TimeInterval(duration))
+        scanRemainingSeconds = duration
         scanCountdown = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self, self.scanning else { return }
