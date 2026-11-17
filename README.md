@@ -45,7 +45,7 @@
 
 הנתונים נשמרים מקומית. אין לצרף לדיווחי תקלה מזהי מכשיר, מזהי כרטיסים, תמונות אישיות או תוכן Recovery.
 
-[אבטחה](docs/SECURITY.md) · [אימות ובדיקות](docs/VALIDATION.md) · [מגבלות בדיקת מכשיר](docs/DEVICE-VALIDATION.md)
+[בדיקת גרסת Linux ו־27.2](docs/LINUX-27.2-AUDIT.md) · [אבטחה](docs/SECURITY.md) · [אימות ובדיקות](docs/VALIDATION.md) · [מגבלות בדיקת מכשיר](docs/DEVICE-VALIDATION.md)
 
 AirCard מאת Mak5er / Johnny Franks והשותפים; AirLift מאת 0xjohnny. רישיון MIT והקרדיטים נשמרים במאגר ובאפליקציה. שלושת העיצובים מקוריים ונכללים ברישיון הפרויקט.
 
